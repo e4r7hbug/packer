@@ -1,0 +1,53 @@
+{
+    "variables": {
+        "GOPATH": "/opt/go"
+    },
+    "builders": [
+        {
+            "type": "docker",
+            "image": "ubuntu",
+            "run_command": [
+                "-d",
+                "-i",
+                "-t",
+                "--env=\"GOPATH={{user `GOPATH`}}\"",
+                "{{.Image}}",
+                "/bin/bash"
+            ],
+            "commit": true
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+                "apt update"
+            ]
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "apt install -y git golang golang-go.tools",
+                "go get golang.org/x/tour/gotour",
+                "echo \"$GOPATH/bin/gotour -http=`ifconfig eth0 | awk '/inet addr/{print substr($2,6)}'`:3999\" > /runme.sh",
+                "chmod +x /runme.sh"
+            ]
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "apt-get autoremove",
+                "apt-get clean"
+            ]
+        }
+    ],
+    "post-processors": [
+        [
+            {
+                "type": "docker-tag",
+                "repository": "test",
+                "force": true
+            }
+        ]
+    ]
+}
